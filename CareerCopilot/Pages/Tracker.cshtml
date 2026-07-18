@@ -1,0 +1,85 @@
+@page
+@model CareerCopilot.Pages.TrackerModel
+@{
+    ViewData["Title"] = "Application Tracker";
+}
+
+<h1 class="mb-4">Application Tracker</h1>
+
+<div class="row mb-4">
+    <div class="col-md-2 text-center">
+        <div class="fs-1 fw-bold text-primary">@Model.Stats.Applied</div>
+        <small class="text-muted">Applied</small>
+    </div>
+    <div class="col-md-2 text-center">
+        <div class="fs-1 fw-bold text-warning">@Model.Stats.Interviews</div>
+        <small class="text-muted">Interviews</small>
+    </div>
+    <div class="col-md-2 text-center">
+        <div class="fs-1 fw-bold text-success">@Model.Stats.Offers</div>
+        <small class="text-muted">Offers</small>
+    </div>
+    <div class="col-md-2 text-center">
+        <div class="fs-1 fw-bold text-danger">@Model.Stats.Rejected</div>
+        <small class="text-muted">Rejected</small>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="fs-1 fw-bold text-info">
+            @(Model.Stats.Applied > 0 ? $"{Model.Stats.Interviews * 100 / Model.Stats.Applied}%" : "—")
+        </div>
+        <small class="text-muted">Interview Rate</small>
+    </div>
+</div>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Job</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Applied</th>
+            <th>Update Status</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var record in Model.Records)
+        {
+            <tr>
+                <td>
+                    <strong>@record.Job.Title</strong><br />
+                    <small class="text-muted">@record.Job.Company</small>
+                </td>
+                <td>@(record.Job.FitAnalysis?.Score.ToString("F1") ?? "—")</td>
+                <td>
+                    <span class="badge @StatusBadge(record.Status)">@record.Status</span>
+                </td>
+                <td><small>@record.AppliedAt?.ToString("dd MMM")</small></td>
+                <td>
+                    <form method="post" asp-page-handler="UpdateStatus">
+                        <input type="hidden" name="jobId" value="@record.JobId" />
+                        <select name="status" class="form-select form-select-sm d-inline w-auto me-1">
+                            @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                            {
+                                <option value="@s" selected="@(s == record.Status)">@s</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                    </form>
+                </td>
+                <td><small>@record.Notes</small></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@functions {
+    string StatusBadge(ApplicationStatus s) => s switch
+    {
+        ApplicationStatus.Offer     => "bg-success",
+        ApplicationStatus.Interview => "bg-warning text-dark",
+        ApplicationStatus.Rejected  => "bg-danger",
+        ApplicationStatus.Applied   => "bg-primary",
+        _                           => "bg-secondary"
+    };
+}

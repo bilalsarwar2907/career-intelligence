@@ -1,0 +1,22 @@
+# Build outputs
+bin/
+obj/
+
+# SQLite database (personal data — never commit)
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets (never commit API keys)
+appsettings.Development.json
+appsettings.Secrets.json
+
+# Rider / VS / VSCode
+.idea/
+.vs/
+.vscode/
+*.user
+
+# OS
+.DS_Store
+Thumbs.db

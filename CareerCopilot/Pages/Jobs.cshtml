@@ -1,0 +1,69 @@
+@page
+@model CareerCopilot.Pages.JobsModel
+@{
+    ViewData["Title"] = "Jobs";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>All Jobs</h1>
+    <form method="post" asp-page-handler="Collect">
+        <button type="submit" class="btn btn-primary">⟳ Collect &amp; Analyse New Jobs</button>
+    </form>
+</div>
+
+@if (Model.StatusMessage is not null)
+{
+    <div class="alert alert-success">@Model.StatusMessage</div>
+}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Job</th>
+            <th>Source</th>
+            <th class="text-center">Score</th>
+            <th>Recommendation</th>
+            <th>Effort</th>
+            <th>Found</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var job in Model.Jobs)
+        {
+            <tr>
+                <td>
+                    <strong>@job.Title</strong><br />
+                    <small class="text-muted">@job.Company · @job.Location</small>
+                </td>
+                <td><span class="badge bg-light text-dark">@job.Source</span></td>
+                <td class="text-center fw-bold">
+                    @if (job.FitAnalysis is not null)
+                    {
+                        <span class="@(job.FitAnalysis.Score >= 8 ? "text-success" : job.FitAnalysis.Score >= 6 ? "text-warning" : "text-danger")">
+                            @job.FitAnalysis.Score.ToString("F1")
+                        </span>
+                    }
+                    else { <span class="text-muted">—</span> }
+                </td>
+                <td>
+                    @if (job.FitAnalysis is not null)
+                    {
+                        var cls = job.FitAnalysis.Recommendation switch
+                        {
+                            Recommendation.ApplyNow => "bg-success",
+                            Recommendation.ApplyIfInterested => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                        <span class="badge @cls">@job.FitAnalysis.Recommendation</span>
+                    }
+                </td>
+                <td>@(job.FitAnalysis is not null ? $"{job.FitAnalysis.EstimatedEffortMinutes} min" : "—")</td>
+                <td><small>@job.DateFound.ToString("dd MMM")</small></td>
+                <td>
+                    <a href="@job.Url" target="_blank" class="btn btn-sm btn-outline-secondary">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,65 @@
+@page
+@model CareerCopilot.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1 class="mb-4">Today's Opportunities</h1>
+
+@if (!Model.Jobs.Any())
+{
+    <div class="alert alert-info">
+        No jobs analysed yet. <a asp-page="/Jobs">Collect and analyse jobs</a> first.
+    </div>
+}
+
+@foreach (var item in Model.Jobs)
+{
+    var badgeClass = item.Analysis?.Recommendation switch
+    {
+        Recommendation.ApplyNow          => "bg-success",
+        Recommendation.ApplyIfInterested => "bg-warning text-dark",
+        _                                => "bg-secondary"
+    };
+
+    var scoreColor = item.Analysis?.Score switch
+    {
+        >= 8  => "text-success",
+        >= 6  => "text-warning",
+        _     => "text-danger"
+    };
+
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-title mb-0">@item.Job.Title</h5>
+                    <small class="text-muted">@item.Job.Company — @item.Job.Location</small>
+                </div>
+                <div class="text-end">
+                    @if (item.Analysis is not null)
+                    {
+                        <div class="fs-3 fw-bold @scoreColor">@item.Analysis.Score.ToString("F1")</div>
+                        <span class="badge @badgeClass">@item.Analysis.Recommendation</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark">Not analysed</span>
+                    }
+                </div>
+            </div>
+
+            @if (item.Analysis is not null)
+            {
+                <p class="mt-2 mb-1 text-muted small">@item.Analysis.Explanation</p>
+                <div class="mt-2">
+                    <a href="@item.Job.Url" target="_blank" class="btn btn-sm btn-outline-primary me-1">View Job</a>
+                    <a asp-page="/Jobs" asp-route-id="@item.Job.Id" class="btn btn-sm btn-outline-secondary me-1">Details</a>
+                    <form method="post" asp-page-handler="MarkApplied" asp-route-jobId="@item.Job.Id" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success">✓ Applied</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+}

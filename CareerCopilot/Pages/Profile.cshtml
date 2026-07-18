@@ -1,0 +1,84 @@
+@page
+@model CareerCopilot.Pages.ProfileModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="mb-1">My Profile</h1>
+        <p class="text-muted mb-4">This is what the AI uses to score every job. The more detail you add, the better the fit analysis.</p>
+
+        @if (Model.Saved)
+        {
+            <div class="alert alert-success">Profile saved.</div>
+        }
+
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Name</label>
+                <input class="form-control" name="Name" value="@Model.Name" placeholder="Your name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Resume / CV</label>
+                <textarea class="form-control font-monospace" name="ResumeText" rows="12"
+                          placeholder="Paste your full CV text here. The AI reads this directly.">@Model.ResumeText</textarea>
+                <small class="text-muted">Plain text is fine. No need to format it.</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Key Skills</label>
+                <input class="form-control" name="Skills" value="@Model.Skills"
+                       placeholder="C#, .NET, Azure, REST APIs, SQL Server" />
+                <small class="text-muted">Comma-separated. Used to match against job requirements.</small>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Preferred Job Titles</label>
+                    <input class="form-control" name="PreferredTitles" value="@Model.PreferredTitles"
+                           placeholder="Senior .NET Developer, Backend Engineer" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Preferred Locations</label>
+                    <input class="form-control" name="PreferredLocations" value="@Model.PreferredLocations"
+                           placeholder="London, Remote, Hybrid" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Preferred Technologies</label>
+                    <input class="form-control" name="PreferredTechnologies" value="@Model.PreferredTechnologies"
+                           placeholder=".NET, Azure, SQL Server" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Minimum Salary (£)</label>
+                    <input class="form-control" type="number" name="MinSalary" value="@Model.MinSalary"
+                           placeholder="60000" />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Career Goals</label>
+                <textarea class="form-control" name="CareerGoals" rows="3"
+                          placeholder="I want to move into a senior/lead role. I prefer companies using modern cloud infrastructure. I want to avoid agencies.">@Model.CareerGoals</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary px-4">Save Profile</button>
+        </form>
+    </div>
+
+    <div class="col-lg-4 ps-lg-5 mt-4 mt-lg-0">
+        <div class="card bg-light border-0 p-4">
+            <h6 class="fw-bold mb-3">Tips for better scoring</h6>
+            <ul class="small text-muted ps-3">
+                <li class="mb-2">Paste your full CV — the AI reads the raw text to find experience and context.</li>
+                <li class="mb-2">Be specific with skills: <em>".NET 8"</em> is more useful than just <em>"programming"</em>.</li>
+                <li class="mb-2">Add career goals to help the AI understand what you're optimising for, not just what you can do.</li>
+                <li class="mb-2">Keep it updated — re-run analysis after any profile change.</li>
+            </ul>
+        </div>
+    </div>
+</div>
