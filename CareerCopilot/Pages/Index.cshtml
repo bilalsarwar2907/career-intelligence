@@ -54,7 +54,7 @@
                 <p class="mt-2 mb-1 text-muted small">@item.Analysis.Explanation</p>
                 <div class="mt-2">
                     <a href="@item.Job.Url" target="_blank" class="btn btn-sm btn-outline-primary me-1">View Job</a>
-                    <a asp-page="/Jobs" asp-route-id="@item.Job.Id" class="btn btn-sm btn-outline-secondary me-1">Details</a>
+                    <a asp-page="/JobDetail" asp-route-id="@item.Job.Id" class="btn btn-sm btn-outline-secondary me-1">Details</a>
                     <form method="post" asp-page-handler="MarkApplied" asp-route-jobId="@item.Job.Id" class="d-inline">
                         <button type="submit" class="btn btn-sm btn-success">✓ Applied</button>
                     </form>

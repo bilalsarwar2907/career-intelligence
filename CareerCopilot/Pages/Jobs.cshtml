@@ -61,6 +61,7 @@
                 <td>@(job.FitAnalysis is not null ? $"{job.FitAnalysis.EstimatedEffortMinutes} min" : "—")</td>
                 <td><small>@job.DateFound.ToString("dd MMM")</small></td>
                 <td>
+                    <a asp-page="/JobDetail" asp-route-id="@job.Id" class="btn btn-sm btn-outline-primary me-1">Details</a>
                     <a href="@job.Url" target="_blank" class="btn btn-sm btn-outline-secondary">View</a>
                 </td>
             </tr>

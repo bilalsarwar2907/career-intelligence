@@ -1,0 +1,189 @@
+@page "{id:int}"
+@model CareerCopilot.Pages.JobDetailModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = Model.Job.Title;
+    var a = Model.Analysis;
+    var strengths = a is not null ? JsonSerializer.Deserialize<List<string>>(a.Strengths) ?? [] : new();
+    var gaps      = a is not null ? JsonSerializer.Deserialize<List<string>>(a.Gaps)      ?? [] : new();
+    var blockers  = a is not null ? JsonSerializer.Deserialize<List<string>>(a.HardBlockers) ?? [] : new();
+
+    var scoreColor = a?.Score switch
+    {
+        >= 8  => "text-success",
+        >= 6  => "text-warning",
+        _     => "text-danger"
+    };
+    var badgeClass = a?.Recommendation switch
+    {
+        Recommendation.ApplyNow          => "bg-success",
+        Recommendation.ApplyIfInterested => "bg-warning text-dark",
+        _                                => "bg-secondary"
+    };
+}
+
+<div class="mb-3">
+    <a asp-page="/Jobs" class="text-muted text-decoration-none">← All Jobs</a>
+</div>
+
+<div class="row g-4">
+
+    @* Left column: job info + analysis *@
+    <div class="col-lg-8">
+
+        @* Header *@
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="mb-1">@Model.Job.Title</h2>
+                        <div class="text-muted fs-5">@Model.Job.Company</div>
+                        <div class="text-muted">@Model.Job.Location · <span class="badge bg-light text-dark">@Model.Job.Source</span></div>
+                    </div>
+                    @if (a is not null)
+                    {
+                        <div class="text-end">
+                            <div class="display-5 fw-bold @scoreColor">@a.Score.ToString("F1")</div>
+                            <span class="badge @badgeClass fs-6">@a.Recommendation</span>
+                        </div>
+                    }
+                </div>
+                <div class="mt-3">
+                    <a href="@Model.Job.Url" target="_blank" class="btn btn-outline-primary me-2">View Original Job</a>
+                    @if (Model.ApplicationRecord is null)
+                    {
+                        <form method="post" asp-page-handler="Apply" class="d-inline">
+                            <button type="submit" class="btn btn-success">✓ Mark as Applied</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary fs-6 p-2">@Model.ApplicationRecord.Status</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (a is not null)
+        {
+            @* Why this score *@
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Why @a.Score.ToString("F1")?</h5>
+                    <p class="text-muted">@a.Explanation</p>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-success mb-2">✓ Strengths</div>
+                            @foreach (var s in strengths)
+                            {
+                                <span class="badge bg-success me-1 mb-1 p-2">@s</span>
+                            }
+                            @if (!strengths.Any())
+                            {
+                                <span class="text-muted small">None identified</span>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold text-warning mb-2">△ Gaps</div>
+                            @foreach (var g in gaps)
+                            {
+                                <span class="badge bg-warning text-dark me-1 mb-1 p-2">@g</span>
+                            }
+                            @if (!gaps.Any())
+                            {
+                                <span class="text-muted small">No gaps identified</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (blockers.Any())
+                    {
+                        <div class="mt-3">
+                            <div class="fw-semibold text-danger mb-2">✗ Hard Blockers</div>
+                            @foreach (var b in blockers)
+                            {
+                                <span class="badge bg-danger me-1 mb-1 p-2">@b</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Resume advice *@
+            @if (!string.IsNullOrWhiteSpace(a.ResumeAdvice))
+            {
+                <div class="card shadow-sm mb-4 border-info">
+                    <div class="card-body">
+                        <h5 class="card-title text-info mb-2">📄 Resume Advice for This Role</h5>
+                        <p class="mb-0">@a.ResumeAdvice</p>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">Analysis is still running — refresh in a moment.</div>
+        }
+
+        @* Job description *@
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Job Description</h5>
+                <div class="text-muted" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;">@Model.Job.Description</div>
+            </div>
+        </div>
+
+    </div>
+
+    @* Right column: effort + tracker *@
+    <div class="col-lg-4">
+
+        @if (a is not null)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Opportunity at a Glance</h6>
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <td class="text-muted">Fit Score</td>
+                            <td class="fw-bold @scoreColor">@a.Score.ToString("F1") / 10</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Recommendation</td>
+                            <td><span class="badge @badgeClass">@a.Recommendation</span></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Est. Effort</td>
+                            <td>@a.EstimatedEffortMinutes min</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Found</td>
+                            <td>@Model.Job.DateFound.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* Application status *@
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Application Status</h6>
+                <form method="post" asp-page-handler="UpdateStatus">
+                    <select name="status" class="form-select mb-2">
+                        @foreach (var s in Enum.GetValues<ApplicationStatus>())
+                        {
+                            <option value="@s" selected="@(s == (Model.ApplicationRecord?.Status ?? ApplicationStatus.Interested))">@s</option>
+                        }
+                    </select>
+                    <div class="mb-2">
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Notes...">@Model.ApplicationRecord?.Notes</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
