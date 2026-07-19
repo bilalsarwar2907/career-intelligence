@@ -36,15 +36,18 @@ SEARCH_TERMS = [
     "Software Engineer C#",
 ]
 
-JOBINDEX_AREA = "storkoebenhavn"   # Greater Copenhagen; use "alle" for all Denmark
+JOBINDEX_AREAS = [
+    "storkoebenhavn",   # Greater Copenhagen
+    "alle",             # All Denmark (catches remote + regional roles)
+]
 
 RESULTS_PER_SEARCH = 20            # LinkedIn / Indeed limit per query
 MAX_AGE_DAYS       = 7             # skip jobs older than this
 OUTPUT_FILE        = "../CareerCopilot/jobs.json"
 
-# Jobindex subid=12 = IT & telecommunications category
+# Jobindex RSS — no subid filter (subid=12 IT category is too restrictive for English terms)
+# it-jobbank.dk (Computerworld) is the same company/infrastructure as Jobindex; covered here.
 JOBINDEX_RSS_BASE  = "https://www.jobindex.dk/jobsoegning.rss"
-IT_JOBBANK_RSS_BASE = "https://www.it-jobbank.dk/jobsoegning.rss"
 
 HEADERS = {
     "User-Agent": (
@@ -107,12 +110,11 @@ def collect_from_rss(base_url: str, source_label: str,
 
     for term in search_terms:
         params = {
-            "q":      term,
-            "area":   area,
-            "subid":  12,         # IT & telecommunications category
+            "q":    term,
+            "area": area,
         }
         url = base_url + "?" + "&".join(f"{k}={requests.utils.quote(str(v))}" for k, v in params.items())
-        print(f"  [{source_label}] Searching: '{term}' ...")
+        print(f"  [{source_label}] Searching: '{term}' in '{area}' ...")
 
         try:
             resp = requests.get(url, headers=HEADERS, timeout=20)
@@ -240,25 +242,16 @@ def collect():
     all_jobs  = []
     seen_keys: set = set()
 
-    print("\n=== Jobindex (Danish IT jobs) ===")
-    all_jobs += collect_from_rss(
-        base_url=JOBINDEX_RSS_BASE,
-        source_label="Jobindex",
-        search_terms=SEARCH_TERMS,
-        area=JOBINDEX_AREA,
-        seen_keys=seen_keys,
-        max_days=MAX_AGE_DAYS,
-    )
-
-    print("\n=== IT-Jobbank / Computerworld IT-job ===")
-    all_jobs += collect_from_rss(
-        base_url=IT_JOBBANK_RSS_BASE,
-        source_label="Computerworld",
-        search_terms=SEARCH_TERMS,
-        area=JOBINDEX_AREA,
-        seen_keys=seen_keys,
-        max_days=MAX_AGE_DAYS,
-    )
+    print("\n=== Jobindex / Computerworld IT-job (Danish) ===")
+    for area in JOBINDEX_AREAS:
+        all_jobs += collect_from_rss(
+            base_url=JOBINDEX_RSS_BASE,
+            source_label="Jobindex",
+            search_terms=SEARCH_TERMS,
+            area=area,
+            seen_keys=seen_keys,
+            max_days=MAX_AGE_DAYS,
+        )
 
     print("\n=== LinkedIn & Indeed ===")
     all_jobs += collect_from_jobspy(seen_keys)
