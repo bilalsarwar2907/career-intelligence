@@ -16,7 +16,7 @@ public class FitAnalyzerOllama : IFitAnalyzer
         _logger = logger;
         var baseUrl = config["Ollama:BaseUrl"] ?? "http://localhost:11434";
         _model     = config["Ollama:Model"]   ?? "llama3";
-        _http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(120) };
+        _http = new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(300) };
     }
 
     public async Task<FitAnalysis> AnalyzeAsync(Job job, UserProfile profile, CancellationToken ct = default)
@@ -43,6 +43,10 @@ public class FitAnalyzerOllama : IFitAnalyzer
         return ParseResponse(responseText, job.Id);
     }
 
+    private static string Truncate(string? text, int max) =>
+        string.IsNullOrEmpty(text) ? "" :
+        text.Length <= max ? text : text[..max] + "…";
+
     private static string BuildPrompt(Job job, UserProfile profile)
     {
         var sb = new StringBuilder();
@@ -51,15 +55,15 @@ public class FitAnalyzerOllama : IFitAnalyzer
         sb.AppendLine();
         sb.AppendLine("## Candidate");
         sb.AppendLine($"Skills: {profile.Skills}");
-        sb.AppendLine($"Career Goals: {profile.CareerGoals}");
+        sb.AppendLine($"Career Goals: {Truncate(profile.CareerGoals, 300)}");
         sb.AppendLine($"Preferred Technologies: {profile.PreferredTechnologies}");
         sb.AppendLine();
-        sb.AppendLine("## Resume");
-        sb.AppendLine(profile.ResumeText);
+        sb.AppendLine("## Resume Summary");
+        sb.AppendLine(Truncate(profile.ResumeText, 1500));
         sb.AppendLine();
         sb.AppendLine("## Job");
         sb.AppendLine($"{job.Title} at {job.Company} ({job.Location})");
-        sb.AppendLine(job.Description);
+        sb.AppendLine(Truncate(job.Description, 1000));
         sb.AppendLine();
         sb.AppendLine("Return this exact JSON structure:");
         sb.AppendLine("""

@@ -11,13 +11,13 @@ public class JobsModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly IJobCollector _collector;
-    private readonly IFitAnalyzer _analyzer;
+    private readonly AnalysisQueue _queue;
 
-    public JobsModel(AppDbContext db, IJobCollector collector, IFitAnalyzer analyzer)
+    public JobsModel(AppDbContext db, IJobCollector collector, AnalysisQueue queue)
     {
-        _db = db;
+        _db        = db;
         _collector = collector;
-        _analyzer = analyzer;
+        _queue     = queue;
     }
 
     public List<Job> Jobs { get; private set; } = [];
@@ -56,22 +56,16 @@ public class JobsModel : PageModel
             added++;
         }
 
-        // 3. Analyse ALL jobs that don't have analysis yet — in parallel
-        var unanalysed = await _db.Jobs
+        // 3. Enqueue unanalysed jobs for background processing
+        var unanalysedIds = await _db.Jobs
             .Where(j => j.FitAnalysis == null)
+            .Select(j => j.Id)
             .ToListAsync();
 
-        var analyses = await Task.WhenAll(
-            unanalysed.Select(job => _analyzer.AnalyzeAsync(job, profile))
-        );
+        foreach (var id in unanalysedIds)
+            _queue.Enqueue(id);
 
-        foreach (var analysis in analyses)
-        {
-            _db.FitAnalyses.Add(analysis);
-        }
-        await _db.SaveChangesAsync();
-
-        StatusMessage = $"Added {added} new job(s). Analysed {unanalysed.Count} job(s).";
+        StatusMessage = $"Added {added} new job(s). Queued {unanalysedIds.Count} job(s) for analysis — refresh in a minute to see scores.";
         await OnGetAsync();
         return Page();
     }

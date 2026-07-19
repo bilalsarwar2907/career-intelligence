@@ -10,12 +10,14 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                       ?? "Data Source=career_copilot.db"));
 
 // ── Services ──────────────────────────────────────────────────────────────────
-builder.Services.AddScoped<IJobCollector, JobCollectorStub>();       // TODO: replace with real collector
+builder.Services.AddScoped<IJobCollector, JobCollectorJson>();       // Reads jobs.json from Python collector
 builder.Services.AddScoped<IFitAnalyzer, FitAnalyzerOllama>();      // Local Ollama (llama3)
 builder.Services.AddScoped<IResumeOptimizer, ResumeOptimizerStub>(); // TODO: wire to LLM
 builder.Services.AddScoped<IApplicationTracker, ApplicationTrackerService>();
 
 // ── Razor Pages ───────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<AnalysisQueue>();
+builder.Services.AddHostedService<AnalysisWorker>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
