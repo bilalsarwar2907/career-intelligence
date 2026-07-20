@@ -11,11 +11,13 @@ public class JobDetailModel : PageModel
 {
     private readonly AppDbContext _db;
     private readonly IApplicationTracker _tracker;
+    private readonly AnalysisQueue _queue;
 
-    public JobDetailModel(AppDbContext db, IApplicationTracker tracker)
+    public JobDetailModel(AppDbContext db, IApplicationTracker tracker, AnalysisQueue queue)
     {
         _db      = db;
         _tracker = tracker;
+        _queue   = queue;
     }
 
     public Job Job { get; private set; } = null!;
@@ -46,6 +48,18 @@ public class JobDetailModel : PageModel
     public async Task<IActionResult> OnPostUpdateStatusAsync(int id, ApplicationStatus status, string? notes)
     {
         await _tracker.UpsertAsync(id, status, notes);
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostReanalyseAsync(int id)
+    {
+        var existing = await _db.FitAnalyses.FirstOrDefaultAsync(f => f.JobId == id);
+        if (existing is not null)
+        {
+            _db.FitAnalyses.Remove(existing);
+            await _db.SaveChangesAsync();
+        }
+        _queue.Enqueue(id);
         return RedirectToPage(new { id });
     }
 }

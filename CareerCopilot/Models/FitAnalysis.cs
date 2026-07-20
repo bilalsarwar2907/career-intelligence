@@ -9,6 +9,7 @@ public class FitAnalysis
     public string Strengths { get; set; } = string.Empty;   // JSON array
     public string Gaps { get; set; } = string.Empty;        // JSON array
     public string HardBlockers { get; set; } = string.Empty;// JSON array
+    public string Anomalies { get; set; } = "[]";           // JSON array — red-flag warnings
     public string Explanation { get; set; } = string.Empty; // Free-text paragraph
     public Recommendation Recommendation { get; set; }
     public string ResumeAdvice { get; set; } = string.Empty;// What to reorder/highlight

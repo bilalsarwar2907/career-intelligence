@@ -63,7 +63,18 @@ public class FitAnalyzerOllama : IFitAnalyzer
         sb.AppendLine();
         sb.AppendLine("## Job");
         sb.AppendLine($"{job.Title} at {job.Company} ({job.Location})");
+        sb.AppendLine($"Found: {job.DateFound:yyyy-MM-dd} ({(int)(DateTime.UtcNow - job.DateFound).TotalDays} days ago)");
         sb.AppendLine(Truncate(job.Description, 1000));
+        sb.AppendLine();
+        sb.AppendLine("## Anomaly Check");
+        sb.AppendLine("Before scoring, check for any of these red flags and include them in the anomalies array:");
+        sb.AppendLine("- Job was found more than 30 days ago (likely filled or budget frozen)");
+        sb.AppendLine("- Tech stack listed conflicts with the seniority level (e.g. 'junior' requiring 5+ years)");
+        sb.AppendLine("- No salary or compensation mentioned");
+        sb.AppendLine("- Location or remote policy conflicts with candidate's preferred locations");
+        sb.AppendLine("- Job description is a generic template (no specific product, team, or project mentioned)");
+        sb.AppendLine("- Required experience is unrealistic for the stated level");
+        sb.AppendLine("If no anomalies, return an empty array.");
         sb.AppendLine();
         sb.AppendLine("Return this exact JSON structure:");
         sb.AppendLine("""
@@ -72,6 +83,7 @@ public class FitAnalyzerOllama : IFitAnalyzer
           "strengths": ["C# experience", "Azure knowledge"],
           "gaps": ["Kubernetes"],
           "hardBlockers": [],
+          "anomalies": ["Job found 45 days ago — may already be filled"],
           "explanation": "One paragraph explaining the fit.",
           "recommendation": "ApplyNow",
           "resumeAdvice": "Move Azure above AWS. Highlight REST API project.",
@@ -92,7 +104,19 @@ public class FitAnalyzerOllama : IFitAnalyzer
         using var doc = JsonDocument.Parse(json.Trim());
         var root = doc.RootElement;
 
-        var recommendation = root.GetProperty("recommendation").GetString() switch
+        static string GetArray(JsonElement el, string key) =>
+            el.TryGetProperty(key, out var p) ? p.GetRawText() : "[]";
+
+        static string GetString(JsonElement el, string key) =>
+            el.TryGetProperty(key, out var p) ? p.GetString() ?? string.Empty : string.Empty;
+
+        static double GetDouble(JsonElement el, string key) =>
+            el.TryGetProperty(key, out var p) ? p.GetDouble() : 0.0;
+
+        static int GetInt(JsonElement el, string key) =>
+            el.TryGetProperty(key, out var p) ? p.GetInt32() : 0;
+
+        var recommendation = GetString(root, "recommendation") switch
         {
             "ApplyNow"          => Recommendation.ApplyNow,
             "ApplyIfInterested" => Recommendation.ApplyIfInterested,
@@ -102,14 +126,15 @@ public class FitAnalyzerOllama : IFitAnalyzer
         return new FitAnalysis
         {
             JobId                  = jobId,
-            Score                  = root.GetProperty("score").GetDouble(),
-            Strengths              = root.GetProperty("strengths").GetRawText(),
-            Gaps                   = root.GetProperty("gaps").GetRawText(),
-            HardBlockers           = root.GetProperty("hardBlockers").GetRawText(),
-            Explanation            = root.GetProperty("explanation").GetString() ?? string.Empty,
+            Score                  = GetDouble(root, "score"),
+            Strengths              = GetArray(root, "strengths"),
+            Gaps                   = GetArray(root, "gaps"),
+            HardBlockers           = GetArray(root, "hardBlockers"),
+            Anomalies              = GetArray(root, "anomalies"),
+            Explanation            = GetString(root, "explanation"),
             Recommendation         = recommendation,
-            ResumeAdvice           = root.GetProperty("resumeAdvice").GetString() ?? string.Empty,
-            EstimatedEffortMinutes = root.GetProperty("estimatedEffortMinutes").GetInt32()
+            ResumeAdvice           = GetString(root, "resumeAdvice"),
+            EstimatedEffortMinutes = GetInt(root, "estimatedEffortMinutes")
         };
     }
 }

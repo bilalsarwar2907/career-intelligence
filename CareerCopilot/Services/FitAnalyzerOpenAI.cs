@@ -53,7 +53,18 @@ public class FitAnalyzerOpenAI : IFitAnalyzer
         sb.AppendLine();
         sb.AppendLine("## Job Description");
         sb.AppendLine($"Title: {job.Title} at {job.Company} ({job.Location})");
+        sb.AppendLine($"Found: {job.DateFound:yyyy-MM-dd} ({(int)(DateTime.UtcNow - job.DateFound).TotalDays} days ago)");
         sb.AppendLine(job.Description);
+        sb.AppendLine();
+        sb.AppendLine("## Anomaly Check");
+        sb.AppendLine("Before scoring, check for any of these red flags and include them in the anomalies array:");
+        sb.AppendLine("- Job was found more than 30 days ago (likely filled or budget frozen)");
+        sb.AppendLine("- Tech stack listed conflicts with the seniority level (e.g. 'junior' requiring 5+ years)");
+        sb.AppendLine("- No salary or compensation mentioned");
+        sb.AppendLine("- Location or remote policy conflicts with candidate's preferred locations");
+        sb.AppendLine("- Job description is a generic template (no specific product, team, or project mentioned)");
+        sb.AppendLine("- Required experience is unrealistic for the stated level");
+        sb.AppendLine("If no anomalies, return an empty array.");
         sb.AppendLine();
         sb.AppendLine("Return ONLY valid JSON in this exact structure:");
         sb.AppendLine("""
@@ -62,6 +73,7 @@ public class FitAnalyzerOpenAI : IFitAnalyzer
           "strengths": ["C# experience", "Azure knowledge"],
           "gaps": ["Kubernetes"],
           "hardBlockers": [],
+          "anomalies": ["Job found 45 days ago — may already be filled"],
           "explanation": "One paragraph explaining the fit.",
           "recommendation": "ApplyNow",
           "resumeAdvice": "Move Azure above AWS in skills section. Highlight REST API project.",
@@ -91,6 +103,7 @@ public class FitAnalyzerOpenAI : IFitAnalyzer
             Strengths              = root.GetProperty("strengths").GetRawText(),
             Gaps                   = root.GetProperty("gaps").GetRawText(),
             HardBlockers           = root.GetProperty("hardBlockers").GetRawText(),
+            Anomalies              = root.TryGetProperty("anomalies", out var anomProp) ? anomProp.GetRawText() : "[]",
             Explanation            = root.GetProperty("explanation").GetString() ?? string.Empty,
             Recommendation         = recommendation,
             ResumeAdvice           = root.GetProperty("resumeAdvice").GetString() ?? string.Empty,

@@ -1,4 +1,5 @@
 using CareerCopilot.Data;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace CareerCopilot.Services;
@@ -51,8 +52,16 @@ public class AnalysisWorker : BackgroundService
 
         _logger.LogInformation("Analysing job {JobId}: {Title}", jobId, job.Title);
         var analysis = await analyzer.AnalyzeAsync(job, profile, ct);
-        db.FitAnalyses.Add(analysis);
-        await db.SaveChangesAsync(ct);
-        _logger.LogInformation("Done: {Title} → {Score}", job.Title, analysis.Score);
+
+        try
+        {
+            db.FitAnalyses.Add(analysis);
+            await db.SaveChangesAsync(ct);
+            _logger.LogInformation("Done: {Title} → {Score}", job.Title, analysis.Score);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqliteException { SqliteErrorCode: 19 })
+        {
+            _logger.LogWarning("Job {JobId}: duplicate analysis discarded (concurrent re-analyse).", jobId);
+        }
     }
 }
