@@ -54,6 +54,7 @@
                     <form method="post" asp-page-handler="Reanalyse" class="d-inline me-2">
                         <button type="submit" class="btn btn-outline-secondary">↻ Re-analyse</button>
                     </form>
+                    <a asp-page="/ResumeOptimizer" asp-route-id="@Model.Job.Id" class="btn btn-outline-info me-2">✏ Tailor Resume</a>
                     @if (Model.ApplicationRecord is null)
                     {
                         <form method="post" asp-page-handler="Apply" class="d-inline">

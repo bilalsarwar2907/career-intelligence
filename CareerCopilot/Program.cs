@@ -11,8 +11,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJobCollector, JobCollectorJson>();       // Reads jobs.json from Python collector
-builder.Services.AddScoped<IFitAnalyzer, FitAnalyzerOllama>();      // Local Ollama (llama3)
-builder.Services.AddScoped<IResumeOptimizer, ResumeOptimizerStub>(); // TODO: wire to LLM
+builder.Services.AddScoped<IFitAnalyzer, FitAnalyzerOllama>();      // Local Ollama — model configured in appsettings.json
+builder.Services.AddScoped<IResumeOptimizer, ResumeOptimizerOllama>(); // Local Ollama — per-job resume tailoring
 builder.Services.AddScoped<IApplicationTracker, ApplicationTrackerService>();
 
 // ── Razor Pages ───────────────────────────────────────────────────────────────

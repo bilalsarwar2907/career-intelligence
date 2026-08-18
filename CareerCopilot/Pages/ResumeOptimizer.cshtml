@@ -1,0 +1,107 @@
+@page "{id:int}"
+@model CareerCopilot.Pages.ResumeOptimizerModel
+@{
+    ViewData["Title"] = $"Resume Advice — {Model.Job.Title}";
+    var a = Model.Analysis;
+}
+
+<div class="mb-3">
+    <a asp-page="/JobDetail" asp-route-id="@Model.Job.Id" class="text-muted text-decoration-none">← Back to Job Detail</a>
+</div>
+
+<h2 class="mb-1">✏ Resume Advisor</h2>
+<p class="text-muted mb-4">
+    Tailored advice for <strong>@Model.Job.Title</strong> at <strong>@Model.Job.Company</strong>
+    @if (a is not null)
+    {
+        <span class="ms-2 badge @(a.Score >= 8 ? "bg-success" : a.Score >= 6 ? "bg-warning text-dark" : "bg-secondary")">
+            Fit @a.Score.ToString("F1")
+        </span>
+    }
+</p>
+
+@* Error *@
+@if (Model.Error is not null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@* Advice output *@
+@if (Model.Advice is not null)
+{
+    <div class="card shadow-sm mb-4 border-success">
+        <div class="card-body">
+            <h5 class="card-title text-success mb-3">✓ What to Change</h5>
+            <p class="mb-0">@Model.Advice.Summary</p>
+        </div>
+    </div>
+
+    @if (Model.Advice.HighlightSkills.Any())
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">🎯 Skills to Lead With</h5>
+                <p class="text-muted small mb-3">Move these to the top of your skills section for this application.</p>
+                <div>
+                    @foreach (var skill in Model.Advice.HighlightSkills)
+                    {
+                        <span class="badge bg-primary fs-6 me-2 mb-2 p-2">@skill</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.Advice.HighlightBullets.Any())
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">📌 Experience Bullets to Surface</h5>
+                <p class="text-muted small mb-3">Rewrite or move these to the top of your most relevant role for this application.</p>
+                <ul class="mb-0">
+                    @foreach (var bullet in Model.Advice.HighlightBullets)
+                    {
+                        <li class="mb-2">@bullet</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+
+    <form method="post">
+        <button type="submit" class="btn btn-outline-secondary">↻ Regenerate Advice</button>
+    </form>
+}
+else
+{
+    @* Generate form (shown before first generation or after error) *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-2">How this works</h5>
+            <p class="text-muted mb-3">
+                The advisor reads your profile and resume alongside this job description, then tells you
+                exactly which skills to move up, which experience bullets to highlight, and what to reframe —
+                without inventing anything you don't already have.
+            </p>
+            <p class="text-muted small mb-0">
+                ⚡ Runs locally via Ollama · Takes ~30–60 seconds · No data leaves your machine
+            </p>
+        </div>
+    </div>
+
+    @if (a is not null)
+    {
+        <div class="card shadow-sm mb-4 border-info">
+            <div class="card-body">
+                <h6 class="text-info mb-2">Resume Advice already in Fit Analysis</h6>
+                <p class="mb-0 text-muted small">@a.ResumeAdvice</p>
+            </div>
+        </div>
+    }
+
+    <form method="post">
+        <button type="submit" class="btn btn-primary btn-lg">
+            ✏ Generate Tailored Resume Advice
+        </button>
+    </form>
+}
