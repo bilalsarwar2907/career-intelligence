@@ -20,3 +20,6 @@ appsettings.Secrets.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Scraped job data (personal data — never commit)
+CareerCopilot/jobs.json

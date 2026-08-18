@@ -159,3 +159,36 @@ dotnet ef database update
 # In Program.cs: services.AddScoped<IFitAnalyzer, FitAnalyzerOpenAI>();
 # Set key: dotnet user-secrets set "OpenAI:ApiKey" "sk-..."
 ```
+
+---
+
+## Session — 2026-08-18
+
+**Focus:** Fix machine-specific hardcoding introduced in previous session; clean up repo hygiene.
+
+### Changes Made
+
+| File | Change |
+|------|--------|
+| `CareerCopilot/Services/JobCollectorJson.cs` | Constructor now injects `IWebHostEnvironment`. Default `jobs.json` path uses `env.ContentRootPath` instead of `AppContext.BaseDirectory`. Hardcoded machine path fully removed from code. |
+| `CareerCopilot/appsettings.json` | Removed `JobCollector:JsonPath` entry. No machine-specific path in config anymore; code falls back to `ContentRootPath/jobs.json` automatically. |
+| `.gitignore` | Added `CareerCopilot/jobs.json` — scraped job data must never be committed. |
+| `README.md` | Three fixes: (1) Prerequisites updated — Ollama is the default LLM, OpenAI is optional, Python deps listed. (2) Quick Start now includes `python collect_jobs.py` as Step 2. (3) "What to Build Next" pruned — Profile page and Real job collector removed (already built); remaining items are Manual import, Resume optimizer page, Outcome analytics, Learning Loop. |
+| `SESSION_SUMMARY.md` | This entry. |
+
+### Error & Resolution Log
+
+| Error | Resolution |
+|-------|-----------|
+| `JobCollector:JsonPath` hardcoded to `C:\Users\biges\...` in appsettings.json | Removed config entry; `JobCollectorJson` now falls back to `IWebHostEnvironment.ContentRootPath` |
+| `CareerCopilot/jobs.json` tracked by git (scraped personal data) | Added to `.gitignore`. **Still requires manual step:** `git rm --cached CareerCopilot/jobs.json && git commit -m "Untrack jobs.json"` |
+
+### Pending Action (manual — not done by Claude)
+
+```bash
+# Run once to stop git tracking jobs.json
+cd C:\Users\biges\CareerCopilot2
+git rm --cached CareerCopilot/jobs.json
+git commit -m "Stop tracking jobs.json (personal scraped data, now in .gitignore)"
+```
+

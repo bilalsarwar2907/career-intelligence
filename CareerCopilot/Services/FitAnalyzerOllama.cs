@@ -76,6 +76,11 @@ public class FitAnalyzerOllama : IFitAnalyzer
         sb.AppendLine("- Required experience is unrealistic for the stated level");
         sb.AppendLine("If no anomalies, return an empty array.");
         sb.AppendLine();
+        sb.AppendLine("## Skill Flagging Rules");
+        sb.AppendLine("- If a required skill is COMPLETELY ABSENT from the candidate's profile (not mentioned anywhere), add it to hardBlockers with prefix \"UNKNOWN:\" — do NOT infer capability or move it to gaps.");
+        sb.AppendLine("- Only use gaps for skills the candidate has partial or adjacent experience with.");
+        sb.AppendLine("- Example: job requires Kubernetes, candidate never mentioned containers → hardBlockers: [\"UNKNOWN: Kubernetes\"]");
+        sb.AppendLine();
         sb.AppendLine("Return this exact JSON structure:");
         sb.AppendLine("""
         {
