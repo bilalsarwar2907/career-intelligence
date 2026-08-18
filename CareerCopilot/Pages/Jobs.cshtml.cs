@@ -9,7 +9,7 @@ namespace CareerCopilot.Pages;
 
 public class JobsModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly AppDbContext  _db;
     private readonly IJobCollector _collector;
     private readonly AnalysisQueue _queue;
 
@@ -20,8 +20,8 @@ public class JobsModel : PageModel
         _queue     = queue;
     }
 
-    public List<Job> Jobs { get; private set; } = [];
-    public string? StatusMessage { get; private set; }
+    public List<Job> Jobs          { get; private set; } = [];
+    public string?   StatusMessage { get; private set; }
 
     public async Task OnGetAsync()
     {
@@ -31,9 +31,9 @@ public class JobsModel : PageModel
             .ToListAsync();
     }
 
+    // ── Collect from Python collector ─────────────────────────────────────────
     public async Task<IActionResult> OnPostCollectAsync()
     {
-        // 1. Get the user profile (single-user: always row 1)
         var profile = await _db.UserProfiles.FirstOrDefaultAsync();
         if (profile is null)
         {
@@ -42,7 +42,6 @@ public class JobsModel : PageModel
             return Page();
         }
 
-        // 2. Collect and save new jobs
         var incoming = await _collector.CollectAsync();
         int added = 0;
 
@@ -56,7 +55,6 @@ public class JobsModel : PageModel
             added++;
         }
 
-        // 3. Enqueue unanalysed jobs for background processing
         var unanalysedIds = await _db.Jobs
             .Where(j => j.FitAnalysis == null)
             .Select(j => j.Id)
@@ -66,6 +64,48 @@ public class JobsModel : PageModel
             _queue.Enqueue(id);
 
         StatusMessage = $"Added {added} new job(s). Queued {unanalysedIds.Count} job(s) for analysis — refresh in a minute to see scores.";
+        await OnGetAsync();
+        return Page();
+    }
+
+    // ── Manual import ─────────────────────────────────────────────────────────
+    public async Task<IActionResult> OnPostImportAsync(
+        string title, string company, string? location,
+        string? url,  string description)
+    {
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(company) || string.IsNullOrWhiteSpace(description))
+        {
+            StatusMessage = "Title, Company, and Description are required.";
+            await OnGetAsync();
+            return Page();
+        }
+
+        // Deduplicate — same title + company already in DB
+        bool exists = await _db.Jobs.AnyAsync(j => j.Title == title && j.Company == company);
+        if (exists)
+        {
+            StatusMessage = $"'{title}' at {company} is already in your job list.";
+            await OnGetAsync();
+            return Page();
+        }
+
+        var job = new Job
+        {
+            Title       = title.Trim(),
+            Company     = company.Trim(),
+            Location    = location?.Trim() ?? string.Empty,
+            Url         = url?.Trim()      ?? string.Empty,
+            Description = description.Trim(),
+            Source      = "Manual",
+            DateFound   = DateTime.UtcNow,
+        };
+
+        _db.Jobs.Add(job);
+        await _db.SaveChangesAsync();
+
+        _queue.Enqueue(job.Id);
+
+        StatusMessage = $"Imported '{job.Title}' at {job.Company} — queued for analysis. Refresh in a minute to see the score.";
         await OnGetAsync();
         return Page();
     }

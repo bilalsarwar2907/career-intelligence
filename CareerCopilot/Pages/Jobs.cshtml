@@ -4,11 +4,54 @@
     ViewData["Title"] = "Jobs";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h1>All Jobs</h1>
-    <form method="post" asp-page-handler="Collect">
-        <button type="submit" class="btn btn-primary">⟳ Collect &amp; Analyse New Jobs</button>
-    </form>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#importForm">
+            ＋ Import Job Manually
+        </button>
+        <form method="post" asp-page-handler="Collect">
+            <button type="submit" class="btn btn-primary">⟳ Collect &amp; Analyse New Jobs</button>
+        </form>
+    </div>
+</div>
+
+@* Manual import form — collapsed by default *@
+<div class="collapse mb-4" id="importForm">
+    <div class="card shadow-sm border-secondary">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Import a Job Manually</h5>
+            <form method="post" asp-page-handler="Import">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Job Title <span class="text-danger">*</span></label>
+                        <input name="title" type="text" class="form-control" placeholder="e.g. Senior .NET Developer" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Company <span class="text-danger">*</span></label>
+                        <input name="company" type="text" class="form-control" placeholder="e.g. Acme A/S" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Location</label>
+                        <input name="location" type="text" class="form-control" placeholder="e.g. Copenhagen" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Job URL</label>
+                        <input name="url" type="url" class="form-control" placeholder="https://..." />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Job Description <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control" rows="6"
+                                  placeholder="Paste the full job description here — the more detail, the better the analysis." required></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success me-2">Import &amp; Queue for Analysis</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#importForm">Cancel</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @if (Model.StatusMessage is not null)
